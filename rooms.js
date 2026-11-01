@@ -1,0 +1,6 @@
+import * as T from 'three';
+export function createRoom(index,product,interior){
+ const root=new T.Group();root.add(interior,product);const placements=[[-.65,.024,.05],[0,.024,.35],[0,.024,.1],[-.5,0,-1.88],[0,.024,.15]];product.position.set(...placements[index]);
+ root.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map)m.map.anisotropy=8;if(m.transparent&&m.map){m.alphaTest=.45;m.transparent=false;m.depthWrite=true;m.side=T.DoubleSide;}}if(/Pleated_curtain/.test(o.name)){o.material=new T.MeshStandardMaterial({color:'#e9dfce',roughness:1,side:T.DoubleSide,transparent:true,opacity:.62});o.castShadow=false;}if(/Ceiling/.test(o.name)){o.visible=true;o.material=o.material.clone();o.material.side=T.BackSide;}if(/Left_return/.test(o.name))o.userData.wall='left';});
+ const lamplight=new T.PointLight('#ffd49b',0,5,2);lamplight.position.set(...[[-1.35,1.55,-.95],[1.9,1.55,-1.25],[-2.05,1.55,-1.4],[-2.2,1.55,-1.6],[0,2,-.15]][index]);root.add(lamplight);return {root,product,bulbs:[lamplight],moodMaterials:[],roomTarget:[[0,.95,-.3],[0,.95,-.35],[0,1.1,-.25],[0,1.25,-1.25],[0,1.45,-.4]][index],productTarget:[[-.65,.3,.05],[0,.26,.35],[0,.55,.1],[-.5,.65,-1.88],[0,.55,.15]][index],viewBounds:{width:index===4?5.0:5.2,height:index===4?3.25:3.0,depth:1.4}};
+}

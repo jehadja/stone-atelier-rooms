@@ -1,0 +1,39 @@
+import * as T from 'three';
+import {Reflector} from './vendor/studio-renderer.js';
+export function setupSalon(room,weave,wood){
+ const grainCanvas=document.createElement('canvas');grainCanvas.width=grainCanvas.height=1024;const gx=grainCanvas.getContext('2d');gx.drawImage(wood.image,0,0,1024,1024);const grain=gx.getImageData(0,0,1024,1024);for(let i=0;i<grain.data.length;i+=4){const l=(grain.data[i]+grain.data[i+1]+grain.data[i+2])/3;const v=Math.min(255,130+l*.65);grain.data[i]=grain.data[i+1]=grain.data[i+2]=v;}gx.putImageData(grain,0,0);room.walnutTexture=new T.CanvasTexture(grainCanvas);room.walnutTexture.colorSpace=T.SRGBColorSpace;room.walnutTexture.wrapS=room.walnutTexture.wrapT=T.RepeatWrapping;room.walnutTexture.repeat.set(2,1);room.walnutTexture.center.set(.5,.5);room.walnutTexture.rotation=Math.PI/2;room.walnutTexture.anisotropy=8;
+ const velvetCanvas=document.createElement('canvas');velvetCanvas.width=velvetCanvas.height=512;const vx=velvetCanvas.getContext('2d'),velvet=vx.createImageData(512,512);let seed=3817;for(let i=0;i<velvet.data.length;i+=4){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const value=112+(seed>>>24)*.13;velvet.data[i]=velvet.data[i+1]=velvet.data[i+2]=value;velvet.data[i+3]=255;}vx.putImageData(velvet,0,0);const pile=new T.CanvasTexture(velvetCanvas);pile.wrapS=pile.wrapT=T.RepeatWrapping;pile.repeat.set(2,2);pile.anisotropy=8;
+ const fibre=weave.clone();fibre.repeat.set(3,3);fibre.needsUpdate=true;room.salon=true;const backdrop=new T.Group();const wall=new T.Mesh(new T.BoxGeometry(7,.01,3.8),new T.MeshBasicMaterial({color:'#78503a'}));wall.rotation.x=Math.PI/2;wall.position.set(0,1.9,5);backdrop.add(wall);for(const x of [-2,0,2]){const panel=new T.Mesh(new T.BoxGeometry(1.5,2.8,.02),new T.MeshBasicMaterial({color:'#895b42'}));panel.position.set(x,1.9,4.98);backdrop.add(panel);}backdrop.visible=false;room.reflectionBackdrop=backdrop;room.root.add(backdrop);
+ const source=Reflector.ReflectorShader,shader={uniforms:T.UniformsUtils.clone(source.uniforms),vertexShader:source.vertexShader.replace('varying vec4 vUv;','varying vec4 vUv;varying vec2 mirrorPoint;').replace('vUv = textureMatrix','mirrorPoint=position.xy;vUv = textureMatrix'),fragmentShader:source.fragmentShader.replace('varying vec4 vUv;','varying vec4 vUv;varying vec2 mirrorPoint;').replace('vec4 base =', 'if(length(mirrorPoint-vec2(-.04,.575))>.32 && length(mirrorPoint-vec2(-.34,-.015))>.34 && length(mirrorPoint-vec2(.34,.055))>.34 && length(mirrorPoint-vec2(.01,-.575))>.31)discard;vec4 base =')};
+ room.wallMirror=new Reflector(new T.PlaneGeometry(1.5,2),{textureWidth:1024,textureHeight:1024,clipBias:.001,color:0xaaaaaa,shader});room.wallMirror.position.set(-2.46,1.975,-2.14);const draw=room.wallMirror.onBeforeRender;room.wallMirror.onBeforeRender=function(...args){backdrop.visible=true;try{draw.apply(this,args);}finally{backdrop.visible=false;}};room.wallMirror.visible=false;room.root.add(room.wallMirror);
+room.rugMaterials={};room.chairMaterials={};room.seamMaterials={};
+ for(const [id,color] of Object.entries({sand:'#b3a18a',ivory:'#ddd4c3',charcoal:'#514b45'})){
+  const c=document.createElement('canvas');c.width=c.height=2048;const x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,2048,2048);x.strokeStyle=id==='charcoal'?'#aaa08f':'#383530';x.lineWidth=45;x.beginPath();x.ellipse(700,450,1500,1100,.25,0,Math.PI*2);x.stroke();x.lineWidth=16;x.beginPath();x.moveTo(250,0);x.lineTo(1700,2048);x.stroke();x.globalCompositeOperation='multiply';x.globalAlpha=.55;for(let y=0;y<2;y++)for(let z=0;z<2;z++)x.drawImage(weave.image,z*1024,y*1024,1024,1024);const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;map.anisotropy=8;
+  room.rugMaterials[id]=new T.MeshStandardMaterial({map,roughness:.98,bumpMap:fibre,bumpScale:.005});
+ }
+ for(const [id,color] of Object.entries({camel:'#ae8062',pearl:'#ded5c5',olive:'#555b43'})){const c=document.createElement('canvas');c.width=c.height=1024;const x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,1024,1024);x.globalCompositeOperation='multiply';x.globalAlpha=.14;for(let y=0;y<4;y++)for(let z=0;z<4;z++)x.drawImage(velvetCanvas,z*256,y*256,256,256);const map=new T.CanvasTexture(c);const pixels=x.getImageData(0,0,1024,1024);for(let yy=0;yy<1024;yy++)for(let xx=0;xx<1024;xx++){const v=.98+.01*Math.sin(xx*.008+Math.sin(yy*.009));const i=(yy*1024+xx)*4;for(let k=0;k<3;k++)pixels.data[i+k]*=v;}x.putImageData(pixels,0,0);map.needsUpdate=true;map.colorSpace=T.SRGBColorSpace;map.anisotropy=8;room.chairMaterials[id]=new T.MeshPhysicalMaterial({map,roughness:.88,sheen:.65,sheenColor:new T.Color(color),sheenRoughness:.72,bumpMap:pile,bumpScale:.00012});}
+ for(const interior of [room.originalInterior,room.bakedInterior])interior.traverse(o=>{
+  if(!o.isMesh)return;
+  if(o.userData.rug){const p=o.geometry.attributes.position,uv=new Float32Array(p.count*2);o.geometry.computeBoundingBox();const b=o.geometry.boundingBox;for(let i=0;i<p.count;i++){uv[i*2]=(p.getX(i)-b.min.x)/Math.max(.001,b.max.x-b.min.x);uv[i*2+1]=(p.getZ(i)-b.min.z)/Math.max(.001,b.max.z-b.min.z);}o.geometry.setAttribute('uv',new T.BufferAttribute(uv,2));}
+ });
+ // Live contact shadows keep changed structures and chairs grounded without frozen silhouettes.
+ const shadow=new T.Mesh(new T.PlaneGeometry(7.1,7),new T.ShadowMaterial({opacity:.24}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.002;shadow.receiveShadow=true;room.root.add(shadow);
+}
+function litChairMaterial(source,kind,choice,room){
+ const light=source.emissiveMap||source.map;
+ const material=kind==='fabric'?room.chairMaterials[choice.upholstery].clone():new T.MeshStandardMaterial({color:kind==='welt'?{camel:'#ae8062',pearl:'#ded5c5',olive:'#555b43'}[choice.upholstery]:kind==='metal'?'#aa7942':'#ffffff',metalness:kind==='metal'?1:0,roughness:kind==='wood'?.42:kind==='metal'?.28:.86});
+ if(kind==='wood'){material.map=room.walnutTexture;material.bumpMap=room.walnutTexture;material.bumpScale=.00025;}material.lightMap=light;material.lightMapIntensity=1;
+ material.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>','#include <lights_fragment_end>\n#ifdef USE_LIGHTMAP\nreflectedLight.directDiffuse=vec3(0.);reflectedLight.indirectDiffuse=texture2D(lightMap,vLightMapUv).rgb*diffuseColor.rgb*CHAIR_DIFFUSE_GAIN;\n#endif');};
+ const compile=material.onBeforeCompile;material.onBeforeCompile=shader=>{compile(shader);shader.fragmentShader=shader.fragmentShader.replace('CHAIR_DIFFUSE_GAIN',kind==='wood'?'1.0':'5.55556');};material.customProgramCacheKey=()=> 'chair-baked-diffuse-v2-'+kind;return material;
+}
+export function applySalon(room,choice){
+ if(!room.seamMaterials[choice.upholstery])room.seamMaterials[choice.upholstery]=new T.MeshStandardMaterial({color:{camel:"#896044",pearl:"#bfb29d",olive:"#3f4933"}[choice.upholstery],roughness:.9});
+ room.product.traverse(o=>{if(o.userData.base)o.visible=o.userData.base===choice.base;});
+ for(const interior of [room.originalInterior,room.bakedInterior])interior.traverse(o=>{
+  if(o.userData.furniture)o.visible=o.userData.furniture===choice.furniture;
+  if(interior===room.bakedInterior&&o.userData.chair&&!o.userData.chairLit)o.visible=false;
+  if(o.userData.rug)o.material=room.rugMaterials[choice.rug];
+  if(o.userData.upholstery)o.material=room.chairMaterials[choice.upholstery];if(o.userData.seam)o.material=room.seamMaterials[choice.upholstery];
+  if(o.isMesh&&(o.material.userData.chairSurface||o.userData.chairSource)){if(!o.userData.chairSource)o.userData.chairSource=o.material;const source=o.userData.chairSource;const key=choice.upholstery;if(!o.userData.chairCache)o.userData.chairCache={};if(!o.userData.chairCache[key])o.userData.chairCache[key]=litChairMaterial(source,source.userData.chairSurface,choice,room);o.material=o.userData.chairCache[key];}
+ });
+}
