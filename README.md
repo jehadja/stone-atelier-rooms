@@ -1,5 +1,7 @@
 # Stone Atelier — Interactive Rooms
 
+Live showroom: https://jehadja.github.io/stone-atelier-rooms/
+
 A desktop-first, movable 3D furniture showroom with five rooms and configurable stone, metal, table bases, rugs and upholstery.
 
 ## Preview locally
@@ -7,6 +9,8 @@ A desktop-first, movable 3D furniture showroom with five rooms and configurable 
 Run `python3 -m http.server 8347 --directory dist`, then open http://localhost:8347.
 
 ## Deploy
+
+GitHub Pages serves the ready-built site from the `gh-pages` branch. Update that branch with the contents of `dist/` to publish future revisions.
 
 - **Cloudflare Pages:** connect this repository, leave the build command empty, and set the output directory to `dist`.
 - **Vercel:** import this repository. The included `vercel.json` selects the ready-built `dist` directory.
