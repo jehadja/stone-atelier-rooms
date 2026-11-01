@@ -1,0 +1,23 @@
+STONE ATELIER — ASSET SOURCES
+
+Custom stone furniture geometry follows the supplied concept brief. Stone thickness remains provisional at 20 mm. None of these finishes is a confirmed production slab.
+
+Stone photographs: Venezia Stone product references, accessed 31 October 2026.
+Forest green: India Green, https://veneziastone.com/marble/india-green-12/
+Patagonia: https://veneziastone.com/quartzite/patagonia/
+Warm ivory: Taj Mahal, https://veneziastone.com/quartzite/taj-mahal/
+Honey onyx: https://veneziastone.com/oniks/onice-honey/
+Midnight: illustrative dark recolouring of the India Green mineral photograph; not a supplier product match.
+Supplier photographs are not included under the Poly Haven CC0 license.
+
+Interior furnishings, timber floor and fabric maps: Poly Haven CC0, https://polyhaven.com/license
+https://polyhaven.com/a/sofa_02
+https://polyhaven.com/a/modern_arm_chair_01
+https://polyhaven.com/a/dining_chair_02
+https://polyhaven.com/a/potted_plant_04
+https://polyhaven.com/a/pachira_aquatica_01
+https://polyhaven.com/a/ceramic_vase_03
+https://polyhaven.com/a/oak_wood_planks
+https://polyhaven.com/a/fabric_pattern_07
+
+Three.js MIT license: dist/vendor/THREE-LICENSE.txt

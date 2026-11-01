@@ -1,0 +1,2 @@
+export function photoSource(state){const c=state.choices[state.room];return `assets/photos/${state.room}-${c.stone}-${c.finish}.jpg`;}
+export function photoAvailability(state){if(state.room==='salon')return 'Explore the Grand Salon and all its configurations in Live render.';if(state.light!=='day')return 'Daylight photographs are available; evening is shown in movable 3D.';if(state.room==='dining'&&state.choices.dining.wood!=='smoked')return 'Smoked oak photographs are available; natural oak is shown in movable 3D.';return null;}
